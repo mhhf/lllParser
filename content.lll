@@ -1,1 +1,54 @@
-( = 8 ( + 4 2 2 ) )
+(seq
+
+;; Stop if the value is less than 150 * basefee.
+(unless (> (txvalue) (* 150 (basefee))) (stop))
+
+;; If there's at least one argument
+(if (txdatan)
+  (seq
+
+    ;; Stop if the first arg (name) is in program space or if it's already been registered.
+    (unless (and
+      (> (txdata 0) 0xff)
+      (! (sload (txdata 0)))
+    ) (stop))
+
+    ;; If there's only one arg
+    (if (= (txdatan) 1)
+
+      (seq
+        ;; Store sender at name, and name at sender.
+        (sstore (txdata 0) (txsender))
+        (sstore (txsender) (txdata 0))
+      )
+
+      ;; No - the second arg (address) exists.
+      (seq
+
+        ;; Stop if the address is in program space or if it's already registered.
+        (unless (and
+          (> (txdata 1) 0xff)
+          (! (sload (txdata 1)))
+        ) (stop))
+
+        ;; Store the address at the name and the name at the address.
+        (sstore (txdata 0) (txdata 1))
+        (sstore (txdata 1) (txdata 0))
+      )
+    )
+  )
+
+  ;; No arguments - either deregister or suicide (if it's from owner's address).
+  (seq
+    ;; Suicide if it's from owner's address.
+    (when (= (txsender) 0x8a40bfaa73256b60764c1bf40675a99083efb075)  (suicide 0x8a40bfaa73256b60764c1bf40675a99083efb075) )
+
+    ;; Otherwise, just deregister any name sender has, if they are registered.
+    (when (sload (txsender)) (seq
+      (sstore (sload (txsender)) 0)
+      (sstore (txsender) 0)
+    ))
+  )
+)
+
+)

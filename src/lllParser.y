@@ -10,9 +10,10 @@
 
 \;[^\r\n]*                  /* skip more shit */
 \s+                         /* skip shit */
-\"[^\"]\"                  return 'STRING'
+\"[^\"]*\"                 return 'STRING'
 ")"                        return ')'
 "("                        return '('
+'0x'+[0-9a-f]*             return 'NUMBER'
 [0-9]+                     return 'NUMBER'
 'add'                      return '+'
 '+'                        return '+'
@@ -34,7 +35,7 @@
 'when'                     return 'WHEN'
 'unless'                   return 'UNLESS'
 'for'                      return 'FOR'
-\w+                        return 'WORD'
+\w+                        return 'INSTRUCTION'
 <<EOF>>                    return 'EOF'
 
 
@@ -58,8 +59,7 @@ SEQUENCE: LIST SEQUENCE
    | 
    ;
 
-ATOM: WORD
-    | STRING
+ATOM: STRING
     | NUMBER
     ;
 
@@ -72,8 +72,9 @@ EXPR: ARETH_OP SEQUENCE
     | WHEN LIST LIST
     | UNLESS LIST LIST
     | FOR LIST LIST
-    | ATOM ATOM
+    | ATOM LIST
     | ATOM 
+    | INSTRUCTION SEQUENCE
     ;
 
 ARETH_OP: '+'
